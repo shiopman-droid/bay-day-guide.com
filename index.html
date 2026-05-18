@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BayDay — SF Bay Area Travel Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   BAYDAY — CSS VARIABLES
+   Edit these to change the whole site's color scheme at once.
+   ============================================================ */
+:root {
+  --fog:    #EFF1F0;   /* Page background */
+  --fog2:   #E2E6E4;   /* Borders, dividers */
+  --bay:    #1A3A4A;   /* Primary brand color */
+  --bay2:   #255468;   /* Hover state for primary */
+  --bay3:   #3A7A96;   /* Accent blue */
+  --bay-lt: #C8DDED;   /* Light blue backgrounds */
+  --gold:   #D4832A;   /* Eyebrows, tags, accents */
+  --rust:   #C45B3A;   /* Newsletter strip, blog tags */
+  --green:  #3A6644;   /* Nature-themed cards */
+  --ink:    #0F1A1F;   /* Main text color */
+  --muted:  #6A7E87;   /* Secondary text */
+  --white:  #FFFFFF;
+  --r:      10px;      /* Border radius */
+  --r-lg:   18px;      /* Large border radius */
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Epilogue', sans-serif;
+  background: var(--fog);
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   EDIT MODE STYLES
+   These appear when the admin clicks "Edit Mode" button.
+   ============================================================ */
+body.edit-mode [contenteditable="true"] {
+  outline: 2px dashed var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+  cursor: text;
+  transition: outline 0.2s;
+  min-width: 20px;
+  display: inline-block;
+}
+body.edit-mode [contenteditable="true"]:hover {
+  outline-color: var(--bay);
+  background: rgba(200,221,237,0.15);
+}
+body.edit-mode [contenteditable="true"]:focus {
+  outline: 2px solid var(--bay);
+  background: rgba(200,221,237,0.2);
+}
+
+/* Edit mode floating banner */
+#edit-banner {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: var(--bay);
+  color: var(--white);
+  padding: 0.7rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  display: none;
+  gap: 1rem;
+  align-items: center;
+  white-space: nowrap;
+}
+body.edit-mode #edit-banner { display: flex; }
+#edit-banner span { opacity: 0.75; }
+#edit-save-btn {
+  background: var(--gold);
+  color: var(--white);
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ============================================================
+   ADMIN DASHBOARD OVERLAY
+   Full-screen panel that slides in from the right.
+   ============================================================ */
+#admin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  pointer-events: none;
+}
+#admin-overlay.open {
+  display: block;
+  pointer-events: auto;
+}
+#admin-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,26,31,0.5);
+  backdrop-filter: blur(4px);
+}
+#admin-panel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 480px;
+  max-width: 95vw;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+#admin-overlay.open #admin-panel { transform: translateX(0); }
+
+#admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--fog2);
+  flex-shrink: 0;
+}
+.admin-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--bay);
+}
+.admin-logo span { color: var(--gold); }
+#admin-close {
+  background: var(--fog);
+  border: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  transition: background 0.2s;
+}
+#admin-close:hover { background: var(--fog2); color: var(--ink); }
+
+#admin-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--fog2);
+  flex-shrink: 0;
+}
+.admin-tab {
+  flex: 1;
+  padding: 0.8rem 0.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.admin-tab.active {
+  color: var(--bay);
+  border-bottom-color: var(--bay);
+}
+
+#admin-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* Admin tab panels */
+.admin-pane { display: none; }
+.admin-pane.active { display: block; }
+
+.admin-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--fog2);
+}
+
+.admin-field { margin-bottom: 1rem; }
+.admin-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.admin-input, .admin-textarea, .admin-select {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid var(--fog2);
+  border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--fog);
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+.admin-input:focus, .admin-textarea:focus, .admin-select:focus {
+  border-color: var(--bay);
+  background: var(--white);
+}
+.admin-textarea { resize: vertical; min-height: 80px; }
+
+.admin-color-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.admin-color-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.color-preview-row { display: flex; align-items: center; gap: 0.5rem; }
+.color-swatch {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1.5px solid var(--fog2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.color-hex {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid var(--fog2);
+  border-radius: 6px;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: var(--fog);
+  outline: none;
+}
+.color-hex:focus { border-color: var(--bay); }
+
+/* Blog posts list */
+.blog-post-item {
+  background: var(--fog);
+  border-radius: var(--r);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--fog2);
+  position: relative;
+}
+.blog-post-item-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+.blog-post-item-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.blog-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.btn-sm {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.35rem 0.8rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Epilogue', sans-serif;
+  transition: opacity 0.2s;
+}
+.btn-sm:hover { opacity: 0.8; }
+.btn-edit-post { background: var(--bay-lt); color: var(--bay); }
+.btn-del-post { background: #FFE5E0; color: var(--rust); }
+.btn-add-post {
+  width: 100%;
+  padding: 0.7rem;
+  background: var(--bay);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+.btn-add-post:hover { background: var(--bay2); }
+
+/* Post editor modal (inside admin panel) */
+#post-editor {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: var(--white);
+  z-index: 10;
+  flex-direction: column;
+  overflow: hidden;
+}
+#post-editor.open { display: flex; }
+#post-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--fog2);
+  flex-shrink: 0;
+}
+#back-to-admin {
+  background: var(--fog);
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 50px;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--muted);
+}
+#back-to-admin:hover { background: var(--fog2); color: var(--ink); }
+#post-editor-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+#post-editor-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+#save-post-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--bay);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: background 0.2s;
+}
+#save-post-btn:hover { background: var(--bay2); }
+
+/* Apply colors button */
+.btn-apply {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--gold);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: background 0.2s;
+}
+.btn-apply:hover { opacity: 0.9; }
+
+/* ============================================================
+   ADMIN TRIGGER BUTTON (top-right of nav)
+   ============================================================ */
+#admin-trigger {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 300;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.admin-nav-btn {
+  background: var(--ink);
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.2s;
+  letter-spacing: 0.2px;
+}
+.admin-nav-btn:hover { opacity: 0.85; }
+.admin-nav-btn.active { background: var(--gold); }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 5%;
+  background: rgba(239,241,240,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--fog2);
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 1.5rem;
+  color: var(--bay); letter-spacing: -0.5px;
+}
+.logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a {
+  text-decoration: none; font-size: 0.88rem; font-weight: 500;
+  color: var(--muted); transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--bay); }
+.nav-btn {
+  background: var(--bay); color: var(--white) !important;
+  padding: 0.5rem 1.3rem; border-radius: 50px;
+  transition: background 0.2s !important;
+}
+.nav-btn:hover { background: var(--bay2) !important; }
+
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+.hero {
+  min-height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 8rem 5% 5rem; gap: 4rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 80% 30%, rgba(26,58,74,0.07), transparent 65%),
+    radial-gradient(ellipse 40% 50% at 10% 80%, rgba(212,131,42,0.06), transparent 55%);
+  pointer-events: none;
+}
+/* Animated fog lines */
+.fog-lines { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.fog-line {
+  position: absolute; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(26,58,74,0.08), transparent);
+  animation: fogMove 8s ease-in-out infinite; opacity: 0;
+}
+.fog-line:nth-child(1) { width: 70%; top: 20%; animation-delay: 0s; }
+.fog-line:nth-child(2) { width: 50%; top: 40%; animation-delay: 2s; }
+.fog-line:nth-child(3) { width: 80%; top: 65%; animation-delay: 4s; }
+.fog-line:nth-child(4) { width: 60%; top: 80%; animation-delay: 6s; }
+@keyframes fogMove {
+  0%   { opacity: 0; transform: translateX(-10%); }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(10%); }
+}
+.hero-left { position: relative; z-index: 1; }
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bay-lt); color: var(--bay);
+  font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 50px; margin-bottom: 1.5rem;
+}
+.hero-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bay3); }
+h1.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(3rem, 5.5vw, 5rem);
+  font-weight: 800; line-height: 1.0;
+  letter-spacing: -2px; color: var(--ink); margin-bottom: 1.5rem;
+}
+h1.hero-title em {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic; font-weight: 400;
+  color: var(--bay); letter-spacing: -1px;
+}
+.hero-desc {
+  font-size: 1rem; color: var(--muted);
+  max-width: 430px; line-height: 1.8;
+  font-weight: 300; margin-bottom: 2.5rem;
+}
+.hero-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn-fill {
+  background: var(--bay); color: var(--white);
+  padding: 0.85rem 2rem; border-radius: 50px;
+  text-decoration: none; font-weight: 500; font-size: 0.9rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-fill:hover { background: var(--bay2); transform: translateY(-2px); }
+.btn-ghost {
+  border: 1.5px solid var(--ink); color: var(--ink);
+  padding: 0.83rem 1.8rem; border-radius: 50px;
+  text-decoration: none; font-weight: 500; font-size: 0.9rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-ghost:hover { background: var(--fog2); transform: translateY(-2px); }
+.hero-nums {
+  display: flex; gap: 2.5rem;
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--fog2);
+}
+.num-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.9rem; font-weight: 800;
+  color: var(--bay); letter-spacing: -1px;
+}
+.num-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+/* Hero visual collage */
+.hero-right {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1fr;
+  grid-template-rows: 220px 140px 100px; gap: 10px;
+}
+.hc { border-radius: var(--r-lg); overflow: hidden; transition: transform 0.3s; }
+.hc:hover { transform: scale(1.02); }
+.hc-a { grid-row: 1/3; } .hc-b { grid-row: 1/2; }
+.hc-c { grid-row: 2/4; } .hc-d { grid-row: 3/4; }
+.hc-inner {
+  width: 100%; height: 100%;
+  display: flex; align-items: flex-end; padding: 12px;
+  font-family: 'Syne', sans-serif; font-size: 0.72rem;
+  font-weight: 600; color: var(--white); letter-spacing: 0.5px; text-transform: uppercase;
+}
+.hc-sf  { background: linear-gradient(145deg, #1A3A4A 0%, #255468 60%, #3A7A96 100%); }
+.hc-gg  { background: linear-gradient(145deg, #C45B3A 0%, #8B3020 100%); }
+.hc-mk  { background: linear-gradient(145deg, #3A6644 0%, #254530 100%); }
+.hc-nb  { background: linear-gradient(145deg, #D4832A 0%, #8B5218 100%); }
+.hc-label { background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 5px; backdrop-filter: blur(6px); }
+@keyframes floatA { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+@keyframes floatB { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+.hc-a { animation: floatA 7s ease-in-out infinite; }
+.hc-b { animation: floatB 6s ease-in-out infinite 1s; }
+.hc-c { animation: floatA 8s ease-in-out infinite 0.5s; }
+
+/* ============================================================
+   SHARED SECTION STYLES
+   ============================================================ */
+section { padding: 6rem 5%; }
+.eyebrow {
+  font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.6rem;
+}
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.9rem, 3vw, 2.7rem);
+  font-weight: 800; line-height: 1.1;
+  letter-spacing: -1px; color: var(--ink); margin-bottom: 0.75rem;
+}
+.sec-sub { font-size: 0.95rem; color: var(--muted); max-width: 480px; font-weight: 300; }
+.sec-hd {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; margin-bottom: 3rem; gap: 1rem; flex-wrap: wrap;
+}
+.view-all {
+  font-size: 0.82rem; font-weight: 500; color: var(--bay);
+  text-decoration: none; border: 1.5px solid var(--bay);
+  padding: 0.45rem 1.1rem; border-radius: 50px;
+  transition: background 0.2s; white-space: nowrap;
+}
+.view-all:hover { background: var(--bay-lt); }
+
+/* ============================================================
+   NEIGHBORHOODS SECTION
+   ============================================================ */
+#neighborhoods { background: var(--white); }
+.hood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.hood-card {
+  border-radius: var(--r-lg); overflow: hidden;
+  cursor: pointer; transition: transform 0.3s;
+  border: 1px solid var(--fog2);
+}
+.hood-card:hover { transform: translateY(-5px); }
+.hood-img {
+  height: 200px; display: flex; align-items: flex-end;
+  padding: 1.25rem; position: relative;
+}
+.hood-img::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 55%);
+}
+/* Edit these gradient values to change neighborhood card colors */
+.hi-sf   { background: linear-gradient(135deg, #1A3A4A 0%, #3A7A96 100%); }
+.hi-oak  { background: linear-gradient(135deg, #3A6644 0%, #7AB87A 100%); }
+.hi-berk { background: linear-gradient(135deg, #6B4F2A 0%, #D4832A 100%); }
+.hi-marin{ background: linear-gradient(135deg, #2A5C3A 0%, #8BBCA0 100%); }
+.hi-sv   { background: linear-gradient(135deg, #1F3A5A 0%, #4A7FAA 100%); }
+.hi-wine { background: linear-gradient(135deg, #C45B3A 0%, #F0A882 100%); }
+.hood-name {
+  font-family: 'Syne', sans-serif; font-size: 1.2rem;
+  font-weight: 700; color: var(--white); position: relative; z-index: 1;
+}
+.hood-sub { font-size: 0.7rem; color: rgba(255,255,255,0.75); position: relative; z-index: 1; letter-spacing: 0.5px; }
+.hood-body { padding: 1rem 1.1rem; background: var(--white); }
+.hood-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.hood-tag {
+  font-size: 0.68rem; font-weight: 500;
+  padding: 3px 9px; border-radius: 50px;
+  background: var(--fog); color: var(--muted); letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   BLOG SECTION
+   ============================================================ */
+#blog { background: var(--fog); }
+.blog-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.25rem; }
+.blog-card {
+  background: var(--white); border-radius: var(--r-lg);
+  overflow: hidden; border: 1px solid var(--fog2);
+  transition: transform 0.25s;
+}
+.blog-card:hover { transform: translateY(-4px); }
+.blog-main { grid-row: 1/3; }
+.bimg {
+  position: relative; display: flex;
+  align-items: flex-end; padding: 1.25rem;
+}
+.bimg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%);
+}
+/* Edit these to change blog card colors */
+.bimg-1 { height: 280px; background: linear-gradient(135deg, #1A3A4A, #3A7A96); }
+.bimg-2 { height: 160px; background: linear-gradient(135deg, #C45B3A, #8B3020); }
+.bimg-3 { height: 160px; background: linear-gradient(135deg, #3A6644, #1F3E28); }
+.blog-main .bimg { height: 340px; }
+.btag {
+  position: absolute; top: 1rem; left: 1rem; z-index: 10;
+  background: var(--gold); color: var(--white);
+  font-size: 0.68rem; font-weight: 500;
+  padding: 3px 10px; border-radius: 50px;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.btitle {
+  font-family: 'Syne', sans-serif; font-size: 1.05rem;
+  font-weight: 700; color: var(--white);
+  position: relative; z-index: 1; line-height: 1.3;
+}
+.blog-main .btitle { font-size: 1.4rem; }
+.bbody { padding: 1.1rem 1.25rem; }
+.bmeta {
+  font-size: 0.73rem; color: var(--muted);
+  display: flex; align-items: center; gap: 7px; margin-bottom: 0.6rem;
+}
+.bmeta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--fog2); }
+.bexcerpt { font-size: 0.85rem; color: var(--muted); line-height: 1.65; font-weight: 300; margin-bottom: 0.8rem; }
+.bmore {
+  font-size: 0.8rem; font-weight: 500; color: var(--bay);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+  transition: gap 0.2s;
+}
+.bmore:hover { gap: 8px; }
+
+/* ============================================================
+   THINGS TO DO SECTION
+   ============================================================ */
+#todo { background: var(--bay); }
+#todo .eyebrow { color: rgba(200,221,237,0.8); }
+#todo .sec-title { color: var(--white); }
+#todo .sec-sub { color: rgba(255,255,255,0.55); }
+.todo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 2.5rem; }
+.todo-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--r-lg); padding: 1.4rem 1.2rem;
+  transition: background 0.25s, transform 0.25s;
+}
+.todo-card:hover { background: rgba(255,255,255,0.13); transform: translateY(-4px); }
+.todo-ico { font-size: 1.4rem; margin-bottom: 0.9rem; display: block; }
+.todo-cat { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(200,221,237,0.65); margin-bottom: 0.4rem; }
+.todo-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 0.5rem; }
+.todo-desc { font-size: 0.8rem; color: rgba(255,255,255,0.55); line-height: 1.6; font-weight: 300; }
+.todo-pill {
+  display: inline-block; margin-top: 0.9rem;
+  font-size: 0.68rem; font-weight: 500;
+  padding: 3px 9px; border-radius: 50px;
+  background: rgba(200,221,237,0.12); color: var(--bay-lt); letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   BOOKING SECTION
+   ============================================================ */
+#booking { background: var(--white); }
+.book-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+.book-form {
+  background: var(--fog); border-radius: var(--r-lg);
+  padding: 2.5rem; border: 1px solid var(--fog2);
+}
+.form-hdg {
+  font-family: 'Syne', sans-serif; font-size: 1.4rem;
+  font-weight: 800; letter-spacing: -0.5px; color: var(--ink); margin-bottom: 1.5rem;
+}
+.fg { margin-bottom: 0.9rem; }
+.flbl {
+  display: block; font-size: 0.73rem; font-weight: 500;
+  color: var(--muted); letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 0.4rem;
+}
+.finput, .fsel {
+  width: 100%; padding: 0.8rem 1rem;
+  border: 1.5px solid var(--fog2); border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif; font-size: 0.9rem;
+  background: var(--white); color: var(--ink);
+  outline: none; transition: border-color 0.2s; appearance: none;
+}
+.finput:focus, .fsel:focus { border-color: var(--bay); }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.fsub {
+  width: 100%; padding: 0.95rem;
+  background: var(--bay); color: var(--white);
+  border: none; border-radius: var(--r);
+  font-family: 'Epilogue', sans-serif; font-size: 0.95rem; font-weight: 500;
+  cursor: pointer; margin-top: 0.5rem; transition: background 0.2s;
+}
+.fsub:hover { background: var(--bay2); }
+.book-feats { list-style: none; margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+.bfeat { display: flex; align-items: flex-start; gap: 1rem; }
+.bfeat-ico {
+  width: 42px; height: 42px; border-radius: var(--r);
+  background: var(--bay-lt); display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.bfeat-name { font-weight: 500; font-size: 0.9rem; color: var(--ink); }
+.bfeat-desc { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+/* ============================================================
+   PARTNER STRIP
+   ============================================================ */
+.pstrip {
+  background: var(--fog2); padding: 1.8rem 5%;
+  display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;
+}
+.pstrip-lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.pnames { display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap; }
+.pname { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--muted); opacity: 0.55; }
+
+/* ============================================================
+   NEWSLETTER STRIP
+   ============================================================ */
+.nl {
+  background: var(--rust); padding: 3.5rem 5%;
+  display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;
+}
+.nl-eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem; }
+.nl-title { font-family: 'Syne', sans-serif; font-size: 1.55rem; font-weight: 800; color: var(--white); letter-spacing: -0.5px; }
+.nl-form { display: flex; gap: 0.6rem; }
+.nl-in { padding: 0.82rem 1.2rem; border-radius: 50px; border: none; font-family: 'Epilogue', sans-serif; font-size: 0.9rem; width: 240px; outline: none; color: var(--ink); }
+.nl-go { padding: 0.82rem 1.4rem; background: var(--ink); color: var(--white); border: none; border-radius: 50px; font-family: 'Epilogue', sans-serif; font-weight: 500; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer { background: var(--ink); color: rgba(255,255,255,0.6); padding: 4rem 5% 2rem; }
+.ftgrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+.ftlogo { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--white); margin-bottom: 1rem; letter-spacing: -0.5px; }
+.ftlogo span { color: var(--gold); }
+.ftdesc { font-size: 0.83rem; line-height: 1.75; color: rgba(255,255,255,0.45); font-weight: 300; max-width: 270px; }
+.ft-col-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.35); margin-bottom: 1.1rem; font-weight: 500; }
+.ftlinks { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.ftlinks a { text-decoration: none; font-size: 0.85rem; color: rgba(255,255,255,0.55); transition: color 0.2s; }
+.ftlinks a:hover { color: var(--white); }
+.ftbottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.ftcopy { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+.ftsocial { display: flex; gap: 1.2rem; }
+.ftsocial a { font-size: 0.75rem; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.2s; }
+.ftsocial a:hover { color: var(--white); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 960px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+  .hood-grid { grid-template-columns: repeat(2, 1fr); }
+  .todo-grid { grid-template-columns: repeat(2, 1fr); }
+  .book-grid { grid-template-columns: 1fr; }
+  .ftgrid { grid-template-columns: 1fr 1fr; }
+  .blog-layout { grid-template-columns: 1fr; }
+  #admin-trigger { top: auto; bottom: 1.5rem; right: 1.5rem; }
+}
+@media (max-width: 600px) {
+  .hood-grid { grid-template-columns: 1fr; }
+  .todo-grid { grid-template-columns: 1fr; }
+  .ftgrid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+}
+
+/* Toast notification */
+#toast {
+  position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%);
+  background: var(--green); color: var(--white);
+  padding: 0.6rem 1.4rem; border-radius: 50px;
+  font-size: 0.82rem; font-weight: 500;
+  z-index: 99999; opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ADMIN TRIGGER BUTTONS (fixed top-right)
+     ============================================================ -->
+<div id="admin-trigger">
+  <button class="admin-nav-btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ Edit Mode</button>
+  <button class="admin-nav-btn" onclick="openAdmin()">⚙️ Admin</button>
+</div>
+
+<!-- ============================================================
+     EDIT MODE BANNER
+     ============================================================ -->
+<div id="edit-banner">
+  <span>✏️ Click any text to edit it</span>
+  <button id="edit-save-btn" onclick="saveEdits()">Save Changes</button>
+</div>
+
+<!-- ============================================================
+     TOAST
+     ============================================================ -->
+<div id="toast">✓ Saved!</div>
+
+<!-- ============================================================
+     ADMIN DASHBOARD OVERLAY
+     ============================================================ -->
+<div id="admin-overlay">
+  <div id="admin-backdrop" onclick="closeAdmin()"></div>
+  <div id="admin-panel">
+    <div id="admin-header">
+      <div class="admin-logo">Bay<span>Day</span> Admin</div>
+      <button id="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div id="admin-tabs">
+      <button class="admin-tab active" onclick="showAdminTab('content')">Content</button>
+      <button class="admin-tab" onclick="showAdminTab('blog')">Blog</button>
+      <button class="admin-tab" onclick="showAdminTab('theme')">Theme</button>
+    </div>
+    <div id="admin-body">
+
+      <!-- CONTENT TAB -->
+      <div class="admin-pane active" id="pane-content">
+        <div class="admin-section-title">Hero Section</div>
+        <div class="admin-field">
+          <label class="admin-label">Tag Line</label>
+          <input class="admin-input" id="f-hero-tag" value="San Francisco Bay Area"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Main Headline (first line)</label>
+          <input class="admin-input" id="f-hero-line1" value="Your guide to"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Italic Headline Word</label>
+          <input class="admin-input" id="f-hero-em" value="the Bay."/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Hero Description</label>
+          <textarea class="admin-textarea" id="f-hero-desc">From foggy San Francisco hills to sunny East Bay streets — BayDay is your local guide to neighborhoods, eats, hikes, and everything in between.</textarea>
+        </div>
+
+        <div class="admin-section-title">Stats</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;">
+          <div class="admin-field">
+            <label class="admin-label">Stat 1</label>
+            <input class="admin-input" id="f-stat1-val" value="9"/>
+            <input class="admin-input" id="f-stat1-lbl" value="Bay Counties" style="margin-top:4px;"/>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Stat 2</label>
+            <input class="admin-input" id="f-stat2-val" value="100+"/>
+            <input class="admin-input" id="f-stat2-lbl" value="Things To Do" style="margin-top:4px;"/>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Stat 3</label>
+            <input class="admin-input" id="f-stat3-val" value="4.9★"/>
+            <input class="admin-input" id="f-stat3-lbl" value="Avg. Rating" style="margin-top:4px;"/>
+          </div>
+        </div>
+
+        <div class="admin-section-title">Newsletter</div>
+        <div class="admin-field">
+          <label class="admin-label">Newsletter Eyebrow</label>
+          <input class="admin-input" id="f-nl-eyebrow" value="Stay in the loop"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Newsletter Headline</label>
+          <input class="admin-input" id="f-nl-title" value="Weekly Bay Area picks, in your inbox."/>
+        </div>
+
+        <div class="admin-section-title">Footer</div>
+        <div class="admin-field">
+          <label class="admin-label">Footer Description</label>
+          <textarea class="admin-textarea" id="f-footer-desc">BayDay is a locally-focused travel guide for the San Francisco Bay Area — helping visitors and newcomers discover the best of SF, Oakland, Marin, and beyond.</textarea>
+        </div>
+
+        <button class="btn-apply" onclick="applyContent()">Apply Changes</button>
+      </div>
+
+      <!-- BLOG TAB -->
+      <div class="admin-pane" id="pane-blog">
+        <div class="admin-section-title">Blog Posts</div>
+        <div id="blog-posts-list"></div>
+        <button class="btn-add-post" onclick="openPostEditor(null)">+ Add New Post</button>
+      </div>
+
+      <!-- THEME TAB -->
+      <div class="admin-pane" id="pane-theme">
+        <div class="admin-section-title">Brand Colors</div>
+        <div class="admin-color-row">
+          <div class="admin-color-field">
+            <label class="admin-label">Primary (Bay)</label>
+            <div class="color-preview-row">
+              <input type="color" class="color-swatch" id="c-bay" value="#1A3A4A" oninput="syncColor('c-bay','ch-bay')"/>
+              <input class="color-hex" id="ch-bay" value="#1A3A4A" oninput="syncColorHex('ch-bay','c-bay')"/>
+            </div>
+          </div>
+          <div class="admin-color-field">
+            <label class="admin-label">Accent (Gold)</label>
+            <div class="color-preview-row">
+              <input type="color" class="color-swatch" id="c-gold" value="#D4832A" oninput="syncColor('c-gold','ch-gold')"/>
+              <input class="color-hex" id="ch-gold" value="#D4832A" oninput="syncColorHex('ch-gold','c-gold')"/>
+            </div>
+          </div>
+          <div class="admin-color-field">
+            <label class="admin-label">Highlight (Rust)</label>
+            <div class="color-preview-row">
+              <input type="color" class="color-swatch" id="c-rust" value="#C45B3A" oninput="syncColor('c-rust','ch-rust')"/>
+              <input class="color-hex" id="ch-rust" value="#C45B3A" oninput="syncColorHex('ch-rust','c-rust')"/>
+            </div>
+          </div>
+          <div class="admin-color-field">
+            <label class="admin-label">Background</label>
+            <div class="color-preview-row">
+              <input type="color" class="color-swatch" id="c-fog" value="#EFF1F0" oninput="syncColor('c-fog','ch-fog')"/>
+              <input class="color-hex" id="ch-fog" value="#EFF1F0" oninput="syncColorHex('ch-fog','c-fog')"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-section-title" style="margin-top:1.5rem;">Typography</div>
+        <div class="admin-field">
+          <label class="admin-label">Heading Font</label>
+          <select class="admin-select" id="f-font-heading" onchange="applyFont()">
+            <option value="'Syne', sans-serif" selected>Syne (current)</option>
+            <option value="'Playfair Display', serif">Playfair Display</option>
+            <option value="'Oswald', sans-serif">Oswald</option>
+            <option value="'DM Serif Display', serif">DM Serif Display</option>
+          </select>
+        </div>
+
+        <div class="admin-section-title" style="margin-top:1.5rem;">Site Name</div>
+        <div class="admin-field">
+          <label class="admin-label">Brand Name (first part)</label>
+          <input class="admin-input" id="f-brand1" value="Bay"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Brand Name (accent part)</label>
+          <input class="admin-input" id="f-brand2" value="Day"/>
+        </div>
+
+        <button class="btn-apply" onclick="applyTheme()">Apply Theme</button>
+      </div>
+
+    </div><!-- end admin-body -->
+
+    <!-- POST EDITOR (slides over admin panel) -->
+    <div id="post-editor">
+      <div id="post-editor-header">
+        <button id="back-to-admin" onclick="closePostEditor()">← Back</button>
+        <div id="post-editor-title">New Post</div>
+      </div>
+      <div id="post-editor-body">
+        <input type="hidden" id="edit-post-id" value=""/>
+        <div class="admin-field">
+          <label class="admin-label">Post Title</label>
+          <input class="admin-input" id="pe-title" placeholder="e.g. Best hikes near SF"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Author</label>
+          <input class="admin-input" id="pe-author" placeholder="Your name"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Date</label>
+          <input class="admin-input" id="pe-date" type="date"/>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Category Tag</label>
+          <select class="admin-select" id="pe-tag">
+            <option>Featured</option>
+            <option>Outdoors</option>
+            <option>Food</option>
+            <option>Culture</option>
+            <option>Day Trip</option>
+            <option>Tips</option>
+          </select>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Excerpt (shown on card)</label>
+          <textarea class="admin-textarea" id="pe-excerpt" placeholder="A short teaser for the blog post..."></textarea>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Full Content</label>
+          <textarea class="admin-textarea" id="pe-content" style="min-height:120px;" placeholder="Write your full blog post here..."></textarea>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Card Color Theme</label>
+          <select class="admin-select" id="pe-color">
+            <option value="linear-gradient(135deg,#1A3A4A,#3A7A96)">Ocean Blue</option>
+            <option value="linear-gradient(135deg,#C45B3A,#8B3020)">Rust Red</option>
+            <option value="linear-gradient(135deg,#3A6644,#1F3E28)">Forest Green</option>
+            <option value="linear-gradient(135deg,#6B4F2A,#D4832A)">Warm Gold</option>
+            <option value="linear-gradient(135deg,#2A5C3A,#8BBCA0)">Sage</option>
+          </select>
+        </div>
+        <button id="save-post-btn" onclick="savePost()">Save Post</button>
+      </div>
+    </div>
+
+  </div><!-- end admin-panel -->
+</div><!-- end admin-overlay -->
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav>
+  <div class="logo">Bay<span id="logo-day">Day</span></div>
+  <ul class="nav-links">
+    <li><a href="#neighborhoods">Neighborhoods</a></li>
+    <li><a href="#blog">Blog</a></li>
+    <li><a href="#todo">Things To Do</a></li>
+    <li><a href="#booking" class="nav-btn">Plan Your Trip</a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="fog-lines">
+    <div class="fog-line"></div><div class="fog-line"></div>
+    <div class="fog-line"></div><div class="fog-line"></div>
+  </div>
+  <div class="hero-left">
+    <div class="hero-tag"><div class="hero-tag-dot"></div><span id="hero-tag-text" contenteditable="false">San Francisco Bay Area</span></div>
+    <h1 class="hero-title">
+      <span id="hero-line1" contenteditable="false">Your guide to</span><br>
+      <em id="hero-em" contenteditable="false">the Bay.</em>
+    </h1>
+    <p class="hero-desc" id="hero-desc" contenteditable="false">
+      From foggy San Francisco hills to sunny East Bay streets — BayDay is your local guide to neighborhoods, eats, hikes, and everything in between.
+    </p>
+    <div class="hero-btns">
+      <a href="#neighborhoods" class="btn-fill">Explore Neighborhoods</a>
+      <a href="#blog" class="btn-ghost">Read the Blog</a>
+    </div>
+    <div class="hero-nums">
+      <div><div class="num-val" id="stat1-val" contenteditable="false">9</div><div class="num-lbl" id="stat1-lbl" contenteditable="false">Bay Counties</div></div>
+      <div><div class="num-val" id="stat2-val" contenteditable="false">100+</div><div class="num-lbl" id="stat2-lbl" contenteditable="false">Things To Do</div></div>
+      <div><div class="num-val" id="stat3-val" contenteditable="false">4.9★</div><div class="num-lbl" id="stat3-lbl" contenteditable="false">Avg. Rating</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hc hc-a"><div class="hc-inner hc-sf"><span class="hc-label" contenteditable="false">San Francisco</span></div></div>
+    <div class="hc hc-b"><div class="hc-inner hc-gg"><span class="hc-label" contenteditable="false">Golden Gate</span></div></div>
+    <div class="hc hc-c"><div class="hc-inner hc-mk"><span class="hc-label" contenteditable="false">Muir Woods</span></div></div>
+    <div class="hc hc-d"><div class="hc-inner hc-nb"><span class="hc-label" contenteditable="false">Napa Valley</span></div></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     NEIGHBORHOODS
+     ============================================================ -->
+<section id="neighborhoods">
+  <div class="sec-hd">
+    <div>
+      <div class="eyebrow" contenteditable="false">Neighborhoods &amp; Cities</div>
+      <h2 class="sec-title" contenteditable="false">Every corner of the Bay</h2>
+      <p class="sec-sub" contenteditable="false">Each city has its own character. Here's where to start exploring.</p>
+    </div>
+    <a href="#" class="view-all">View all →</a>
+  </div>
+  <div class="hood-grid">
+    <div class="hood-card">
+      <div class="hood-img hi-sf">
+        <div><div class="hood-sub" contenteditable="false">City</div><div class="hood-name" contenteditable="false">San Francisco</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Mission District</span><span class="hood-tag" contenteditable="false">Castro</span><span class="hood-tag" contenteditable="false">Haight</span><span class="hood-tag" contenteditable="false">SOMA</span></div></div>
+    </div>
+    <div class="hood-card">
+      <div class="hood-img hi-oak">
+        <div><div class="hood-sub" contenteditable="false">City</div><div class="hood-name" contenteditable="false">Oakland</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Temescal</span><span class="hood-tag" contenteditable="false">Jack London Sq.</span><span class="hood-tag" contenteditable="false">Fruitvale</span></div></div>
+    </div>
+    <div class="hood-card">
+      <div class="hood-img hi-berk">
+        <div><div class="hood-sub" contenteditable="false">City</div><div class="hood-name" contenteditable="false">Berkeley</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Telegraph Ave</span><span class="hood-tag" contenteditable="false">Gourmet Ghetto</span><span class="hood-tag" contenteditable="false">4th Street</span></div></div>
+    </div>
+    <div class="hood-card">
+      <div class="hood-img hi-marin">
+        <div><div class="hood-sub" contenteditable="false">County</div><div class="hood-name" contenteditable="false">Marin County</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Sausalito</span><span class="hood-tag" contenteditable="false">Muir Woods</span><span class="hood-tag" contenteditable="false">Mill Valley</span></div></div>
+    </div>
+    <div class="hood-card">
+      <div class="hood-img hi-sv">
+        <div><div class="hood-sub" contenteditable="false">Region</div><div class="hood-name" contenteditable="false">Silicon Valley</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Palo Alto</span><span class="hood-tag" contenteditable="false">San Jose</span><span class="hood-tag" contenteditable="false">Cupertino</span></div></div>
+    </div>
+    <div class="hood-card">
+      <div class="hood-img hi-wine">
+        <div><div class="hood-sub" contenteditable="false">Region</div><div class="hood-name" contenteditable="false">Wine Country</div></div>
+      </div>
+      <div class="hood-body"><div class="hood-tags"><span class="hood-tag" contenteditable="false">Napa Valley</span><span class="hood-tag" contenteditable="false">Sonoma</span><span class="hood-tag" contenteditable="false">Healdsburg</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     BLOG
+     ============================================================ -->
+<section id="blog">
+  <div class="sec-hd">
+    <div>
+      <div class="eyebrow" contenteditable="false">Travel Blog</div>
+      <h2 class="sec-title" contenteditable="false">Stories from the Bay</h2>
+      <p class="sec-sub" contenteditable="false">Local tips, hidden spots, and honest takes from Bay Area regulars and first-time visitors.</p>
+    </div>
+    <a href="#" class="view-all">All posts →</a>
+  </div>
+  <div class="blog-layout" id="blog-grid">
+    <!-- Default posts — replaced dynamically by JS if posts are saved -->
+    <div class="blog-card blog-main">
+      <div class="bimg bimg-1" style="height:320px;">
+        <span class="btag">Featured</span>
+        <div class="btitle" contenteditable="false">The perfect 3-day SF itinerary: fog, dim sum, and a sunset you'll never forget</div>
+      </div>
+      <div class="bbody">
+        <div class="bmeta"><span contenteditable="false">Priya Narayanan</span><span class="bmeta-dot"></span><span contenteditable="false">May 5, 2025</span><span class="bmeta-dot"></span><span>7 min read</span></div>
+        <p class="bexcerpt" contenteditable="false">Start in the Mission, end on the Marin Headlands. Here's how to see the best of San Francisco in 72 hours without feeling rushed or overwhelmed.</p>
+        <a href="#" class="bmore">Read more →</a>
+      </div>
+    </div>
+    <div class="blog-card">
+      <div class="bimg bimg-2">
+        <span class="btag" contenteditable="false">Outdoors</span>
+        <div class="btitle" style="font-size:0.95rem;" contenteditable="false">Why Muir Woods is worth the early alarm</div>
+      </div>
+      <div class="bbody">
+        <div class="bmeta"><span contenteditable="false">Lucas Baird</span><span class="bmeta-dot"></span><span contenteditable="false">Apr 22, 2025</span></div>
+        <p class="bexcerpt" contenteditable="false">Redwoods, silence, and a morning mist that makes you feel genuinely small. Go before 9am.</p>
+        <a href="#" class="bmore">Read more →</a>
+      </div>
+    </div>
+    <div class="blog-card">
+      <div class="bimg bimg-3">
+        <span class="btag" contenteditable="false">Food</span>
+        <div class="btitle" style="font-size:0.95rem;" contenteditable="false">Oakland's food scene is giving SF a run for its money</div>
+      </div>
+      <div class="bbody">
+        <div class="bmeta"><span contenteditable="false">Amara Osei</span><span class="bmeta-dot"></span><span contenteditable="false">Apr 10, 2025</span></div>
+        <p class="bexcerpt" contenteditable="false">From Ethiopian spots on Telegraph to the new wave of Temescal tasting menus, Oakland delivers.</p>
+        <a href="#" class="bmore">Read more →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     THINGS TO DO
+     ============================================================ -->
+<section id="todo">
+  <div>
+    <div class="eyebrow">Things To Do</div>
+    <h2 class="sec-title">What the Bay does best</h2>
+    <p class="sec-sub">Hand-picked experiences for every type of traveler — outdoor adventurer, foodie, culture seeker, or day-tripper.</p>
+  </div>
+  <div class="todo-grid">
+    <div class="todo-card"><span class="todo-ico">🌉</span><div class="todo-cat" contenteditable="false">Landmarks</div><div class="todo-name" contenteditable="false">Walk the Golden Gate Bridge</div><p class="todo-desc" contenteditable="false">The south end offers the best angle. Go on a clear morning before the fog rolls in — usually before 10am.</p><span class="todo-pill" contenteditable="false">Free</span></div>
+    <div class="todo-card"><span class="todo-ico">🌲</span><div class="todo-cat" contenteditable="false">Nature</div><div class="todo-name" contenteditable="false">Hike Marin Headlands</div><p class="todo-desc" contenteditable="false">Miles of coastal trails with sweeping bay views, WWII bunkers, and a black-sand beach that's rarely crowded.</p><span class="todo-pill" contenteditable="false">Free entry</span></div>
+    <div class="todo-card"><span class="todo-ico">🍷</span><div class="todo-cat" contenteditable="false">Day Trip</div><div class="todo-name" contenteditable="false">Napa &amp; Sonoma Wine Tours</div><p class="todo-desc" contenteditable="false">World-class wineries less than 90 minutes from the city. Book tastings in advance, especially weekends.</p><span class="todo-pill" contenteditable="false">$25–$85+</span></div>
+    <div class="todo-card"><span class="todo-ico">🥟</span><div class="todo-cat" contenteditable="false">Food</div><div class="todo-name" contenteditable="false">Dim Sum in the Richmond</div><p class="todo-desc" contenteditable="false">SF's Richmond District has some of the best dim sum outside Hong Kong. Arrive early or expect a long wait.</p><span class="todo-pill" contenteditable="false">Under $20</span></div>
+    <div class="todo-card"><span class="todo-ico">⛵</span><div class="todo-cat" contenteditable="false">Water</div><div class="todo-name" contenteditable="false">Bay Cruise &amp; Alcatraz</div><p class="todo-desc" contenteditable="false">The audio tour on Alcatraz is genuinely excellent. Book tickets at least 2 weeks ahead in peak season.</p><span class="todo-pill" contenteditable="false">$45/person</span></div>
+    <div class="todo-card"><span class="todo-ico">🎨</span><div class="todo-cat" contenteditable="false">Culture</div><div class="todo-name" contenteditable="false">SFMOMA &amp; Mission Murals</div><p class="todo-desc" contenteditable="false">World-class modern art inside, then walk the Mission for street murals that rival any gallery wall.</p><span class="todo-pill" contenteditable="false">$25 SFMOMA</span></div>
+    <div class="todo-card"><span class="todo-ico">🌅</span><div class="todo-cat" contenteditable="false">Views</div><div class="todo-name" contenteditable="false">Twin Peaks at Sunset</div><p class="todo-desc" contenteditable="false">Best 360° panoramic view of the city. Dress warm — it's always windier and colder up top than you expect.</p><span class="todo-pill" contenteditable="false">Free</span></div>
+    <div class="todo-card"><span class="todo-ico">🚴</span><div class="todo-cat" contenteditable="false">Active</div><div class="todo-name" contenteditable="false">Bike to Sausalito</div><p class="todo-desc" contenteditable="false">Rent bikes at Fisherman's Wharf, ride across the Golden Gate to Sausalito, then catch the ferry back.</p><span class="todo-pill" contenteditable="false">~$35 rental</span></div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<div class="pstrip">
+  <div class="pstrip-lbl">Booking partners</div>
+  <div class="pnames">
+    <div class="pname">Expedia</div><div class="pname">Airbnb</div><div class="pname">Booking.com</div>
+    <div class="pname">Viator</div><div class="pname">OpenTable</div><div class="pname">GetYourGuide</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     BOOKING
+     ============================================================ -->
+<section id="booking">
+  <div class="book-grid">
+    <div>
+      <div class="eyebrow" contenteditable="false">Plan Your Visit</div>
+      <h2 class="sec-title" contenteditable="false">Let's build your Bay Area trip.</h2>
+      <p class="sec-sub" contenteditable="false">We'll match you with the best stays, experiences, and restaurants for your dates and vibe.</p>
+      <ul class="book-feats">
+        <li class="bfeat"><div class="bfeat-ico">🏨</div><div><div class="bfeat-name" contenteditable="false">Hotels, hostels &amp; vacation rentals</div><div class="bfeat-desc" contenteditable="false">From budget-friendly Oakland stays to waterfront SF hotels</div></div></li>
+        <li class="bfeat"><div class="bfeat-ico">🎟️</div><div><div class="bfeat-name" contenteditable="false">Experiences &amp; tours</div><div class="bfeat-desc" contenteditable="false">Alcatraz, wine tours, bay cruises, walking food tours — all bookable here</div></div></li>
+        <li class="bfeat"><div class="bfeat-ico">🍽️</div><div><div class="bfeat-name" contenteditable="false">Restaurant reservations</div><div class="bfeat-desc" contenteditable="false">From Michelin-starred spots to the best taquerias in the Mission</div></div></li>
+      </ul>
+    </div>
+    <div class="book-form">
+      <div class="form-hdg" contenteditable="false">Find your Bay stay</div>
+      <div class="fg"><label class="flbl">Where in the Bay?</label>
+        <select class="fsel"><option>San Francisco</option><option>Oakland</option><option>Berkeley</option><option>Marin County</option><option>Silicon Valley</option><option>Wine Country (Napa/Sonoma)</option></select>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="flbl">Check-in</label><input class="finput" type="date"/></div>
+        <div class="fg"><label class="flbl">Check-out</label><input class="finput" type="date"/></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="flbl">Travelers</label><select class="fsel"><option>1 traveler</option><option>2 travelers</option><option>3–4 travelers</option><option>Group (5+)</option></select></div>
+        <div class="fg"><label class="flbl">Budget</label><select class="fsel"><option>Budget ($)</option><option>Mid-range ($$)</option><option>Luxury ($$$)</option></select></div>
+      </div>
+      <button class="fsub">Search availability →</button>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<div class="nl">
+  <div>
+    <div class="nl-eyebrow" id="nl-eyebrow" contenteditable="false">Stay in the loop</div>
+    <div class="nl-title" id="nl-title" contenteditable="false">Weekly Bay Area picks, in your inbox.</div>
+  </div>
+  <div class="nl-form">
+    <input class="nl-in" type="email" placeholder="your@email.com"/>
+    <button class="nl-go">Subscribe</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ftgrid">
+    <div>
+      <div class="ftlogo">Bay<span>Day</span></div>
+      <p class="ftdesc" id="footer-desc" contenteditable="false">BayDay is a locally-focused travel guide for the San Francisco Bay Area — helping visitors and newcomers discover the best of SF, Oakland, Marin, and beyond.</p>
+    </div>
+    <div>
+      <div class="ft-col-title">Explore</div>
+      <ul class="ftlinks"><li><a href="#neighborhoods">Neighborhoods</a></li><li><a href="#todo">Things To Do</a></li><li><a href="#blog">Travel Blog</a></li><li><a href="#booking">Plan a Trip</a></li></ul>
+    </div>
+    <div>
+      <div class="ft-col-title">Destinations</div>
+      <ul class="ftlinks"><li><a href="#">San Francisco</a></li><li><a href="#">Oakland &amp; East Bay</a></li><li><a href="#">Marin County</a></li><li><a href="#">Wine Country</a></li><li><a href="#">Silicon Valley</a></li></ul>
+    </div>
+    <div>
+      <div class="ft-col-title">Company</div>
+      <ul class="ftlinks"><li><a href="#">About BayDay</a></li><li><a href="#">Write for Us</a></li><li><a href="#">Advertise</a></li><li><a href="#">Contact</a></li><li><a href="#">Privacy Policy</a></li></ul>
+    </div>
+  </div>
+  <div class="ftbottom">
+    <div class="ftcopy" contenteditable="false">© 2025 BayDay. A San Francisco Bay Area travel guide. All rights reserved.</div>
+    <div class="ftsocial"><a href="#">Instagram</a><a href="#">Twitter / X</a><a href="#">TikTok</a><a href="#">YouTube</a></div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+     All site editing logic lives here.
+     ============================================================ -->
+<script>
+// ── DATA STORE ──────────────────────────────────────────────
+// Blog posts are stored in this array. Add/edit/delete via Admin.
+let blogPosts = [
+  {
+    id: 1,
+    title: "The perfect 3-day SF itinerary: fog, dim sum, and a sunset you'll never forget",
+    author: "Priya Narayanan",
+    date: "2025-05-05",
+    tag: "Featured",
+    excerpt: "Start in the Mission, end on the Marin Headlands. Here's how to see the best of San Francisco in 72 hours.",
+    content: "Full article content goes here...",
+    color: "linear-gradient(135deg,#1A3A4A,#3A7A96)",
+    featured: true
+  },
+  {
+    id: 2,
+    title: "Why Muir Woods is worth the early alarm",
+    author: "Lucas Baird",
+    date: "2025-04-22",
+    tag: "Outdoors",
+    excerpt: "Redwoods, silence, and a morning mist that makes you feel genuinely small. Go before 9am.",
+    content: "Full article content goes here...",
+    color: "linear-gradient(135deg,#C45B3A,#8B3020)",
+    featured: false
+  },
+  {
+    id: 3,
+    title: "Oakland's food scene is giving SF a run for its money",
+    author: "Amara Osei",
+    date: "2025-04-10",
+    tag: "Food",
+    excerpt: "From Ethiopian spots on Telegraph to the new wave of Temescal tasting menus, Oakland delivers.",
+    content: "Full article content goes here...",
+    color: "linear-gradient(135deg,#3A6644,#1F3E28)",
+    featured: false
+  }
+];
+
+// ── EDIT MODE ────────────────────────────────────────────────
+function toggleEditMode() {
+  const body = document.body;
+  const btn  = document.getElementById('edit-mode-btn');
+  const isOn = body.classList.toggle('edit-mode');
+  // Toggle contenteditable on all tagged elements
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.contentEditable = isOn ? 'true' : 'false';
+  });
+  btn.textContent = isOn ? '✏️ Exit Edit' : '✏️ Edit Mode';
+  btn.classList.toggle('active', isOn);
+}
+
+function saveEdits() {
+  // In a real app, you'd POST this to a server.
+  // Here we just show a confirmation toast.
+  showToast('Changes saved!');
+}
+
+// ── ADMIN PANEL ──────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  renderBlogList();
+}
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+}
+
+// Switch between Content / Blog / Theme tabs
+function showAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── CONTENT TAB ──────────────────────────────────────────────
+function applyContent() {
+  // Hero
+  document.getElementById('hero-tag-text').textContent = document.getElementById('f-hero-tag').value;
+  document.getElementById('hero-line1').textContent     = document.getElementById('f-hero-line1').value;
+  document.getElementById('hero-em').textContent        = document.getElementById('f-hero-em').value;
+  document.getElementById('hero-desc').textContent      = document.getElementById('f-hero-desc').value;
+  // Stats
+  document.getElementById('stat1-val').textContent = document.getElementById('f-stat1-val').value;
+  document.getElementById('stat1-lbl').textContent = document.getElementById('f-stat1-lbl').value;
+  document.getElementById('stat2-val').textContent = document.getElementById('f-stat2-val').value;
+  document.getElementById('stat2-lbl').textContent = document.getElementById('f-stat2-lbl').value;
+  document.getElementById('stat3-val').textContent = document.getElementById('f-stat3-val').value;
+  document.getElementById('stat3-lbl').textContent = document.getElementById('f-stat3-lbl').value;
+  // Newsletter
+  document.getElementById('nl-eyebrow').textContent = document.getElementById('f-nl-eyebrow').value;
+  document.getElementById('nl-title').textContent   = document.getElementById('f-nl-title').value;
+  // Footer
+  document.getElementById('footer-desc').textContent = document.getElementById('f-footer-desc').value;
+  showToast('Content updated!');
+}
+
+// ── THEME TAB ────────────────────────────────────────────────
+function syncColor(colorId, hexId) {
+  document.getElementById(hexId).value = document.getElementById(colorId).value;
+}
+function syncColorHex(hexId, colorId) {
+  const val = document.getElementById(hexId).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    document.getElementById(colorId).value = val;
+  }
+}
+
+function applyTheme() {
+  const root = document.documentElement;
+  root.style.setProperty('--bay',  document.getElementById('c-bay').value);
+  root.style.setProperty('--gold', document.getElementById('c-gold').value);
+  root.style.setProperty('--rust', document.getElementById('c-rust').value);
+  root.style.setProperty('--fog',  document.getElementById('c-fog').value);
+
+  // Brand name
+  const brand1 = document.getElementById('f-brand1').value;
+  const brand2 = document.getElementById('f-brand2').value;
+  document.querySelector('.logo').innerHTML = brand1 + '<span id="logo-day">' + brand2 + '</span>';
+
+  // Font
+  const font = document.getElementById('f-font-heading').value;
+  document.querySelectorAll('.sec-title, h1.hero-title, .logo, .ftlogo, .form-hdg, .admin-logo, .hood-name, .todo-name, .btitle').forEach(el => {
+    el.style.fontFamily = font;
+  });
+
+  showToast('Theme applied!');
+}
+
+function applyFont() { /* live preview handled by applyTheme */ }
+
+// ── BLOG MANAGEMENT ──────────────────────────────────────────
+function renderBlogList() {
+  const list = document.getElementById('blog-posts-list');
+  list.innerHTML = '';
+  blogPosts.forEach(post => {
+    const item = document.createElement('div');
+    item.className = 'blog-post-item';
+    item.innerHTML = `
+      <div class="blog-post-item-title">${post.title}</div>
+      <div class="blog-post-item-meta">${post.author} · ${formatDate(post.date)} · <span style="color:var(--gold)">${post.tag}</span></div>
+      <div class="blog-item-actions">
+        <button class="btn-sm btn-edit-post" onclick="openPostEditor(${post.id})">Edit</button>
+        <button class="btn-sm btn-del-post" onclick="deletePost(${post.id})">Delete</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function openPostEditor(postId) {
+  const editor = document.getElementById('post-editor');
+  editor.classList.add('open');
+  document.getElementById('edit-post-id').value = postId || '';
+  document.getElementById('post-editor-title').textContent = postId ? 'Edit Post' : 'New Post';
+  // Set today's date as default
+  document.getElementById('pe-date').value = new Date().toISOString().split('T')[0];
+
+  if (postId) {
+    const post = blogPosts.find(p => p.id === postId);
+    if (post) {
+      document.getElementById('pe-title').value   = post.title;
+      document.getElementById('pe-author').value  = post.author;
+      document.getElementById('pe-date').value    = post.date;
+      document.getElementById('pe-tag').value     = post.tag;
+      document.getElementById('pe-excerpt').value = post.excerpt;
+      document.getElementById('pe-content').value = post.content;
+      document.getElementById('pe-color').value   = post.color;
+    }
+  } else {
+    // Clear for new post
+    ['pe-title','pe-author','pe-excerpt','pe-content'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('pe-tag').selectedIndex = 0;
+    document.getElementById('pe-color').selectedIndex = 0;
+  }
+}
+
+function closePostEditor() {
+  document.getElementById('post-editor').classList.remove('open');
+}
+
+function savePost() {
+  const postId = document.getElementById('edit-post-id').value;
+  const data = {
+    title:   document.getElementById('pe-title').value,
+    author:  document.getElementById('pe-author').value,
+    date:    document.getElementById('pe-date').value,
+    tag:     document.getElementById('pe-tag').value,
+    excerpt: document.getElementById('pe-excerpt').value,
+    content: document.getElementById('pe-content').value,
+    color:   document.getElementById('pe-color').value,
+    featured: false
+  };
+
+  if (!data.title) { alert('Please enter a title.'); return; }
+
+  if (postId) {
+    // Update existing
+    const idx = blogPosts.findIndex(p => p.id == postId);
+    if (idx > -1) { blogPosts[idx] = { ...blogPosts[idx], ...data }; }
+  } else {
+    // Add new
+    data.id = Date.now();
+    blogPosts.push(data);
+  }
+
+  renderBlogList();
+  renderBlogGrid();
+  closePostEditor();
+  showToast('Post saved!');
+}
+
+function deletePost(postId) {
+  if (!confirm('Delete this post?')) return;
+  blogPosts = blogPosts.filter(p => p.id !== postId);
+  renderBlogList();
+  renderBlogGrid();
+  showToast('Post deleted.');
+}
+
+// Re-renders the blog cards on the main page
+function renderBlogGrid() {
+  const grid = document.getElementById('blog-grid');
+  if (blogPosts.length === 0) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No posts yet. Add one in the Admin panel!</p>';
+    return;
+  }
+
+  const featured = blogPosts.find(p => p.tag === 'Featured') || blogPosts[0];
+  const others   = blogPosts.filter(p => p.id !== featured.id).slice(0, 2);
+
+  let html = `
+    <div class="blog-card blog-main">
+      <div class="bimg" style="height:340px;background:${featured.color}">
+        <span class="btag">${featured.tag}</span>
+        <div class="btitle">${featured.title}</div>
+      </div>
+      <div class="bbody">
+        <div class="bmeta"><span>${featured.author}</span><span class="bmeta-dot"></span><span>${formatDate(featured.date)}</span></div>
+        <p class="bexcerpt">${featured.excerpt}</p>
+        <a href="#" class="bmore">Read more →</a>
+      </div>
+    </div>`;
+
+  others.forEach(post => {
+    html += `
+      <div class="blog-card">
+        <div class="bimg" style="height:160px;background:${post.color}">
+          <span class="btag">${post.tag}</span>
+          <div class="btitle" style="font-size:0.95rem">${post.title}</div>
+        </div>
+        <div class="bbody">
+          <div class="bmeta"><span>${post.author}</span><span class="bmeta-dot"></span><span>${formatDate(post.date)}</span></div>
+          <p class="bexcerpt">${post.excerpt}</p>
+          <a href="#" class="bmore">Read more →</a>
+        </div>
+      </div>`;
+  });
+
+  grid.innerHTML = html;
+}
+
+// ── UTILITIES ────────────────────────────────────────────────
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
